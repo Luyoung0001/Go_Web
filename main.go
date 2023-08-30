@@ -9,12 +9,9 @@ import (
 
 var globalSessions *session.Manager
 
-// 然后在init函数中初始化
-
+// init 初始化
 func init() {
 	globalSessions, _ = session.NewManager("memory", "gosessionid", 3600)
-}
-func init() {
 	go globalSessions.GC()
 }
 func login(w http.ResponseWriter, r *http.Request) {
@@ -67,6 +64,7 @@ func count(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
 func main() {
 
 }
