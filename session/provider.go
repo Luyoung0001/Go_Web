@@ -11,6 +11,9 @@ import (
 	"time"
 )
 
+// provider 注册表
+var provides = make(map[string]Provider)
+
 // Session 接口
 type Session interface {
 	Set(key, value interface{}) error // 设置 session 的值
@@ -26,8 +29,6 @@ type Provider interface {
 	SessionDestroy(sid string) error         // SessionDestroy函数用来销毁sid对应的Session变量
 	SessionGC(maxLifeTime int64)             // SessionGC根据maxLifeTime来删除过期的数据
 }
-
-var provides = make(map[string]Provider)
 
 type Manager struct {
 	cookieName  string
@@ -74,8 +75,13 @@ func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (se
 	defer manager.lock.Unlock()
 	cookie, err := r.Cookie(manager.cookieName)
 	if err != nil || cookie.Value == "" {
+		// 查看是否为当前客户端注册过名为 gosessionid 的 cookie,如果没有注册过,就为客户端创建一个该 cookie
+
+		// 创建 sessionID
 		sid := manager.sessionID()
+		// 创建一个 session 接口,这其实是一个 创建完成的 sessionStore ,sessionStore 实现了该接口
 		session, _ = manager.provider.SessionInit(sid)
+		// 创建 cookie
 		cookie := http.Cookie{Name: manager.cookieName, Value: url.QueryEscape(sid), Path: "/", HttpOnly: true, MaxAge: int(manager.maxLifeTime)}
 		http.SetCookie(w, &cookie)
 	} else {
@@ -104,11 +110,16 @@ func (manager *Manager) SessionDestroy(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Session 销毁
+// Session 回收
 
 func (manager *Manager) GC() {
 	manager.lock.Lock()
 	defer manager.lock.Unlock()
 	manager.provider.SessionGC(manager.maxLifeTime)
-	time.AfterFunc(time.Duration(manager.maxLifeTime), func() { manager.GC() })
+
+	// 在一个单独的 goroutine 中定期调用 GC
+	go func() {
+		time.Sleep(time.Duration(manager.maxLifeTime))
+		manager.GC()
+	}()
 }
