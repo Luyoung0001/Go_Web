@@ -15,7 +15,7 @@ var globalSessions *session.Manager
 // init 初始化
 
 func init() {
-	globalSessions, _ = session.NewManager("memory", "gosessionid", 3600)
+	globalSessions, _ = session.NewManager("memory", "gosessionid", 600)
 	go globalSessions.GC()
 }
 func login(c *gin.Context) {
@@ -39,7 +39,7 @@ func login(c *gin.Context) {
 		if err != nil {
 			return
 		}
-		http.Redirect(c.Writer, c.Request, "/", 302)
+		http.Redirect(c.Writer, c.Request, "/", http.StatusPermanentRedirect)
 	}
 }
 func count(c *gin.Context) {
@@ -57,7 +57,7 @@ func count(c *gin.Context) {
 			return
 		}
 	}
-	t, err := template.ParseFiles("/Users/luliang/GoLand/Go_Web/template/count.html")
+	t, err := template.ParseFiles("template/count.html")
 	if err != nil {
 		fmt.Println(err)
 	}

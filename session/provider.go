@@ -116,10 +116,5 @@ func (manager *Manager) GC() {
 	manager.lock.Lock()
 	defer manager.lock.Unlock()
 	manager.provider.SessionGC(manager.maxLifeTime)
-
-	// 在一个单独的 goroutine 中定期调用 GC
-	go func() {
-		time.Sleep(time.Duration(manager.maxLifeTime))
-		manager.GC()
-	}()
+	time.AfterFunc(time.Second*20, func() { manager.GC() })
 }

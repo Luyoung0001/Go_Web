@@ -137,6 +137,5 @@ func (st *SessionStore) SessionID() string {
 
 func init() {
 	pder.sessions = make(map[string]*list.Element)
-	// 注册一个名字为"memory"的管理器,这也是首先干的事
 	session.Register("memory", pder)
 }
